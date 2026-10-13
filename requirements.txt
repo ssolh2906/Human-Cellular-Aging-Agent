@@ -1,2 +1,3 @@
 anndata
-scipy.io
+pandas
+scipy
