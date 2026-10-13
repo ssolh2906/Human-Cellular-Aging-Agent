@@ -77,6 +77,7 @@ pyscenic_output/
 adj.csv
 reg.csv
 
-# ── Logs ──────────────────────────────────────────────────────────────────────
+# ── Logs (run-specific, not part of codebase) ─────────────────────────────────
 *.log
-logs/
+logs/*
+!logs/.gitkeep
