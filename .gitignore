@@ -50,6 +50,7 @@ data/*
 *.tar
 *.tar.gz
 *.mtx
+*.h5ad 
 *.loom
 
 # Processed AnnData files
@@ -80,3 +81,5 @@ reg.csv
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
 logs/
+
+
