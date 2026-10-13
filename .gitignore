@@ -40,6 +40,9 @@ Thumbs.db
 .vscode/
 *.code-workspace
 
+# ── Internal / sensitive documents ───────────────────────────────────────────
+internal_docs/
+
 # ── Bioinformatics data (large files — store externally) ──────────────────────
 # Raw input data
 data/*
