@@ -80,11 +80,5 @@ reg.csv
 
 # ── Logs (run-specific, not part of codebase) ─────────────────────────────────
 *.log
-<<<<<<< HEAD
-logs/
-
-
-=======
 logs/*
 !logs/.gitkeep
->>>>>>> e9ef90c5912913609dfa4c9ba596cdb026c15bd0
