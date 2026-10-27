@@ -17,9 +17,14 @@ Thought  →  adjust and continue, or declare done
 ## Project Layout
 
 ```
-src/<step>/
-├── agent.py        ← agent loop (hand-written)
+src/agent/          ← one shared agent for every step (importable: no leading digit)
+├── run.py          ← entry point (--stage, --sample)
+├── loop.py         ← agent loop (hand-written)
 ├── tools.py        ← tool definitions (hand-written)
+├── kernel.py       ← persistent Python kernel for execute_python
+└── prompts/        ← one instruction file per stage
+
+src/<step>/
 └── pipeline/
     ├── Sample_1.py ← final confirmed script (Claude-generated, saved once)
     └── Sample_2.py
@@ -92,8 +97,7 @@ def save_log(messages: list, sample: str):
 
 | Path | Tracked |
 |---|---|
-| `src/<step>/agent.py` | Yes |
-| `src/<step>/tools.py` | Yes |
+| `src/agent/*.py`, `src/agent/prompts/` | Yes |
 | `src/<step>/pipeline/*.py` | Yes — final scripts only |
 | `logs/` | **No** — gitignored |
 | `output/*.h5ad` | **No** — gitignored (large files) |
