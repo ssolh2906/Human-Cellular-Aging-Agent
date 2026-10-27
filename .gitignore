@@ -59,9 +59,9 @@ output/*
 *.h5ad
 *.h5
 
-# Analysis results / figures
-results/*
-!results/.gitkeep
+# Analysis analysis / figures
+analysis/*
+!analysis/.gitkeep
 *.pkl
 *.pickle
 
