@@ -4,9 +4,15 @@
 import os
 import tarfile
 import tempfile
+from pathlib import Path
 import pandas as pd
 import anndata as ad
 from scipy.io import mmread
+
+# Resolved from this file's location so paths work regardless of cwd (scripts, notebooks/)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = PROJECT_ROOT / "data"
+OUTPUT_DIR = PROJECT_ROOT / "output"
 
 """
 See AnnData documentation at  
@@ -63,7 +69,7 @@ def _sample_name(sample_id):
     return s if s.startswith("Sample_") else f"Sample_{s}"
 
 
-def load_broad_metadata(metadata_path="./data/broad/metadata.json"):
+def load_broad_metadata(metadata_path=DATA_DIR / "metadata.json"):
     """Returns metadata.json as a DataFrame indexed by sample name ('Sample_3444')."""
     meta = pd.read_json(metadata_path, dtype=False)
     meta["age"] = pd.to_numeric(meta["age"])
@@ -71,7 +77,7 @@ def load_broad_metadata(metadata_path="./data/broad/metadata.json"):
     return meta
 
 
-def load_broad_sample(sample_id, data_dir="./data/broad", metadata_path=None):
+def load_broad_sample(sample_id, data_dir=DATA_DIR, metadata_path=None):
     """
     Unpacks data_dir/Sample_<id>.tar(.gz) into a temp dir, reads it, and returns an AnnData.
 
@@ -105,7 +111,7 @@ def load_broad_sample(sample_id, data_dir="./data/broad", metadata_path=None):
     return adata
 
 
-def load_broad_samples(sample_ids=None, data_dir="./data/broad", metadata_path=None):
+def load_broad_samples(sample_ids=None, data_dir=DATA_DIR, metadata_path=None):
     """Loads several samples (default: every sample in metadata.json) -> {'Sample_3444': AnnData}."""
     if sample_ids is None:
         meta = load_broad_metadata(metadata_path or os.path.join(data_dir, "metadata.json"))
