@@ -43,6 +43,10 @@ Thumbs.db
 # ── Internal / sensitive documents ───────────────────────────────────────────
 internal_docs/
 
+# ── Google credentials ────────────────────────────────────────────────────────
+config/credentials.json
+config/token.json
+
 # ── Bioinformatics data (large files — store externally) ──────────────────────
 # Raw input data
 data/*
@@ -59,9 +63,9 @@ output/*
 *.h5ad
 *.h5
 
-# Analysis results / figures
-results/*
-!results/.gitkeep
+# Analysis analysis / figures
+analysis/*
+!analysis/.gitkeep
 *.pkl
 *.pickle
 
