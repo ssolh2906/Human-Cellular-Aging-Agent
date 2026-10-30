@@ -42,6 +42,7 @@ Thumbs.db
 
 # ── Internal / sensitive documents ───────────────────────────────────────────
 internal_docs/
+docs/HANDOFF_*.md
 
 # ── Google credentials ────────────────────────────────────────────────────────
 config/credentials.json

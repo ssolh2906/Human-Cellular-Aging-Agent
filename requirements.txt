@@ -10,5 +10,9 @@ scanpy
 igraph
 leidenalg
 
+# agent (src/agent)
+anthropic
+python-dotenv
+
 # notebooks
 ipykernel
