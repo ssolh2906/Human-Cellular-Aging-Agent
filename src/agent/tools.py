@@ -1,6 +1,6 @@
 #ST
 """
-Agent tools: list_dir, read_file, inspect_h5ad, view_image, run_python.
+Agent tools: list_dir, read_file, inspect_h5ad, view_image, run_python, fetch_gene_map.
 Each tool takes plain kwargs and returns a string (view_image returns image blocks);
 errors are raised and turned into is_error tool results by the loop.
 """
@@ -19,6 +19,7 @@ import anndata as ad
 # src/01_preprocess starts with a digit, so it is not importable as a package
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "01_preprocess"))
 from cs223_scRNAdataset_read_funs import PROJECT_ROOT, DATA_DIR
+from gene_map import GENE_MAP_PATH, DOWNLOAD_NOTE, download_gene_map, load_gene_map
 
 MAX_CHARS = 20000   # cap on any tool output so one call can't flood the context
 MAX_LIST = 200
@@ -113,6 +114,9 @@ def inspect_h5ad(path, n_cells=2000):
         # var_names can be Ensembl IDs; MT- genes are only visible in the symbol column
         symbols = adata.var["gene_symbols"] if "gene_symbols" in adata.var else adata.var_names
         mt = np.array([str(n).upper().startswith("MT-") for n in symbols])
+        if GENE_MAP_PATH.exists():   # preferred: chromosome from the gene map
+            table = load_gene_map()
+            mt = np.asarray(adata.var_names.isin(table.index[table["chrom"] == "MT"]))
         mt_frac = np.asarray(X[:, mt].sum(axis=1)).ravel() / np.maximum(counts, 1)
         q = lambda a: " / ".join(f"{v:.0f}" for v in np.percentile(a, [5, 50, 95]))
 
@@ -124,7 +128,8 @@ def inspect_h5ad(path, n_cells=2000):
         out.append(f"total counts per cell (p5/p50/p95): {q(counts)}")
         out.append(f"genes detected per cell (p5/p50/p95): {q(genes)}")
         if mt.sum() == 0:
-            out.append("mito fraction: n/a (no gene named MT-*; genes are Ensembl IDs without symbols)")
+            out.append("mito fraction: n/a (genes are Ensembl IDs without symbols and no gene map found; "
+                       "call fetch_gene_map, then add_gene_info in run_python)")
         else:
             out.append("mito fraction (p5/p50/p95): "
                        + " / ".join(f"{v:.3f}" for v in np.percentile(mt_frac, [5, 50, 95]))
@@ -185,7 +190,26 @@ def view_image(path):
     return [{"type": "image", "source": {"type": "base64", "media_type": MEDIA_TYPES[p.suffix.lower()], "data": data}}]
 
 
+def fetch_gene_map(ask):
+    """Builds data/gene_map.tsv if missing; downloads only after the user says yes."""
+    if GENE_MAP_PATH.exists():
+        return f"{GENE_MAP_PATH.name} already exists. Use add_gene_info(adata) in run_python."
+    if not ask(f"fetch_gene_map wants to download: {DOWNLOAD_NOTE}"):
+        raise RuntimeError("the user declined the download")
+    table = download_gene_map()
+    return f"Wrote {GENE_MAP_PATH.name} ({len(table)} genes). Use add_gene_info(adata) in run_python."
+
+
 TOOLS += [
+    {
+        "name": "fetch_gene_map",
+        "description": (
+            "Create the Ensembl ID -> gene symbol/chromosome table (data/gene_map.tsv) if it is missing. "
+            "The data only has ENSG IDs, so call this before you need symbols or mitochondrial genes. "
+            "The user is asked to approve the download. If the table already exists it does nothing."
+        ),
+        "input_schema": {"type": "object", "properties": {}},
+    },
     {
         "name": "run_python",
         "description": (
@@ -219,8 +243,11 @@ TOOLS += [
 _FUNCS = {"list_dir": list_dir, "read_file": read_file, "inspect_h5ad": inspect_h5ad, "view_image": view_image}
 
 
-def run_tool(name, tool_input, kernel=None):
-    """Dispatch one tool call; raises on bad input so the loop can report it as is_error."""
+def run_tool(name, tool_input, kernel=None, ask=None):
+    """Dispatch one tool call; raises on bad input so the loop can report it as is_error.
+    `ask(question) -> bool` is how tools get the user's y/N."""
+    if name == "fetch_gene_map":
+        return fetch_gene_map(ask)
     if name == "run_python":
         timeout = min(int(tool_input.get("timeout", 120)), 600)
         return kernel.execute(tool_input["code"], timeout=timeout)

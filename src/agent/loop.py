@@ -52,10 +52,14 @@ def save_log(messages, label):
     return path
 
 
+def _yes(question):
+    """y/N prompt on the terminal; anything but 'y' is a no."""
+    return input(f"\n{question}\n[y/N] ").strip().lower() == "y"
+
+
 def _approved(code):
     """--confirm gate: show the code and let the user veto it."""
-    print(f"\n--- run_python wants to run ---\n{code}\n-------------------------------")
-    return input("Run it? [y/N] ").strip().lower() == "y"
+    return _yes(f"--- run_python wants to run ---\n{code}\n-------------------------------\nRun it?")
 
 
 def _print_usage(totals):
@@ -115,7 +119,7 @@ def run_agent(task, label="run", max_iterations=20, system_prompt=None, confirm=
                     if confirm and block.name == "run_python" and not _approved(block.input["code"]):
                         raise RuntimeError("the user declined to run this code")
                     results.append({"type": "tool_result", "tool_use_id": block.id,
-                                    "content": run_tool(block.name, block.input, kernel)})
+                                    "content": run_tool(block.name, block.input, kernel, ask=_yes)})
                 except Exception as e:   # report to the model so it can adjust
                     results.append({"type": "tool_result", "tool_use_id": block.id,
                                     "content": f"Error: {e}", "is_error": True})
