@@ -18,6 +18,8 @@ and
 # Sometimes an additional file named metadata.tsv is available that contains descriptive
 # information about the dataset.
 ###
+# TODO: Unzip tar files
+# TODO: Write the loop
 def load_broad_dataset(data_dir):
     """
     Reads uncompressed Broad Institute single-cell data into an AnnData object.
