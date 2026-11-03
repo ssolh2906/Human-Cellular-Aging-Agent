@@ -37,8 +37,10 @@ class PythonKernel:
         self.kc = self.km.client()
         self.kc.start_channels()
         self.kc.wait_for_ready(timeout=60)
-        # src/01_preprocess is not a package (leading digit); make `from gene_map import ...` work
-        self.execute(f"import sys; sys.path.insert(0, {str(PROJECT_ROOT / 'src' / '01_preprocess')!r})")
+        # src/01_preprocess and src/02_bubbletree are not packages (leading digit); make
+        # `from gene_map import ...` and `import bubbletree` work
+        dirs = [str(PROJECT_ROOT / "src" / d) for d in ("01_preprocess", "02_bubbletree")]
+        self.execute(f"import sys; sys.path[:0] = {dirs!r}")
 
     def shutdown(self):
         if self.km is None:
