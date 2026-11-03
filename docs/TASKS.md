@@ -29,19 +29,25 @@ Build a computational pipeline using **scRNA-seq data** to:
 **Data setup:**
 - Download datasets from the "Cell Aging" Google Drive folder
 - Each `Sample_<#>.tar` unpacks to 3 files: `_matrix.mtx`, `_feature.tsv`, `_barcodes.tsv`
-- `metadata.json` maps each sample to young/elderly age group
-- Convert all `.mtx`/`.tsv` trios to `.h5ad` format (sample code provided)
-- Save `.h5ad` files to `./data/`
+- `metadata.json` gives each sample's numeric age (plus tissue, sex, disease status); there is no young/old label, so the agent defines the grouping
+- Convert all `.mtx`/`.tsv` trios to `.h5ad` with `src/01_preprocess/convert_to_h5ad.py` (plain script, no agent)
+- Save `.h5ad` files to `./data/Sample_<id>.h5ad`
 
-**Analysis (via Claude Sonnet):**
+**Analysis (AI agent, Claude Sonnet 5.5 — `claude-sonnet-5-5`):**
+- Everything after the h5ad conversion runs through the ReAct agent in `src/agent/`
+- The agent works autonomously: it opens the data, looks at the numbers and plots, picks parameters (QC thresholds, young/old grouping, clustering resolution, ...), tries alternatives, and re-runs when a result looks wrong
 - Read each `.h5ad` and run standard scRNA-seq pipeline: QC → normalization → clustering
 - Save processed outputs to `./output/` with a modified filename
 
-**scBubbleTree:**
+**scBubbleTree** (pure-Python reimplementation based on the course examples, not the R package):
 - Build a scBubbleTree for each processed `.h5ad` output
 - Use trees to:
   - **Differential Expression (DE):** compare young vs old within the same cell type
   - **Age-associated markers:** identify up-regulated genes (senescence, inflammation, dysfunction) and down-regulated genes (metabolism, proteostasis)
+
+**Report** (written by the agent to `./analysis_results/`), two tabs:
+- **Final results:** the pipeline run with the final chosen parameters, from intermediate outputs to final results
+- **Agent decision log:** what was run with which numbers, and why something was re-run (very short, in English)
 
 ---
 
@@ -86,7 +92,7 @@ Build a computational pipeline using **scRNA-seq data** to:
 
 | Task | Tool |
 |---|---|
-| scRNA-seq analysis | Scanpy / Claude Sonnet |
+| scRNA-seq analysis | Scanpy / Claude Sonnet 5.5 agent |
 | Visualization | scBubbleTree |
 | GRN inference | SCENIC |
 | Pseudotime | Monocle3 / Palantir |
