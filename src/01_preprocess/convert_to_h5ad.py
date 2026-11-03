@@ -39,6 +39,13 @@ def load_h5ad_sample(sample_id):
     return ad.read_h5ad(h5ad_path(sample_id))
 
 
+def load_h5ad_samples(sample_ids=None):
+    """Reads several converted samples (default: every sample in metadata.json) -> {'Sample_3444': AnnData}."""
+    if sample_ids is None:
+        sample_ids = list(load_broad_metadata().index)
+    return {_sample_name(i): load_h5ad_sample(i) for i in sample_ids}
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--samples", nargs="+", help="sample ids (default: all in metadata.json)")
