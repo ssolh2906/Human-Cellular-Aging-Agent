@@ -63,7 +63,7 @@ def read_file(path):
     if not p.is_file():
         raise ValueError(f"not a file: {path}")
     try:
-        return _clip(p.read_text())
+        return _clip(p.read_text(encoding="utf-8"))
     except UnicodeDecodeError:
         raise ValueError(f"{path} is binary; use inspect_h5ad for .h5ad files")
 

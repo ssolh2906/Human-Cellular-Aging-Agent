@@ -26,7 +26,7 @@ PRICE = {"input": 2.0, "output": 10.0, "cache_read": 0.2, "cache_write": 2.5}
 
 def load_prompt(name="system"):
     """Reads prompts/<name>.md, dropping the '#ST' marker line."""
-    lines = (PROMPT_DIR / f"{name}.md").read_text().splitlines()
+    lines = (PROMPT_DIR / f"{name}.md").read_text(encoding="utf-8").splitlines()
     return "\n".join(l for l in lines if l.strip() != "#ST").strip()
 
 

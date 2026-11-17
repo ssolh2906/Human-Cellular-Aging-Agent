@@ -25,12 +25,17 @@ and
 # Reading BROAD Institute scRNA files (matrix.mtx, barcodes.tsv, features.tsv).
 # Files may carry a sample prefix (e.g. Sample_3444_matrix.mtx) and may be gzipped.
 ###
+
+# TODO: Unzip tar files
+# TODO: Write the loop
+
 def _find_file(data_dir, suffixes):
     """Return the first file in data_dir whose name ends with one of `suffixes`."""
     for name in sorted(os.listdir(data_dir)):
         if name.endswith(tuple(suffixes)):
             return os.path.join(data_dir, name)
     raise FileNotFoundError(f"None of {suffixes} found in {data_dir}")
+
 
 
 def load_broad_dataset(data_dir):
