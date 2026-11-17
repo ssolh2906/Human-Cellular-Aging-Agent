@@ -138,4 +138,4 @@ def load_h5ad_dataset(data_dir):
 if __name__ == "__main__":
     adata = load_broad_sample(3444)
     print(adata)
-    print(adata.obs.head())
+    # print(adata.obs.head())
