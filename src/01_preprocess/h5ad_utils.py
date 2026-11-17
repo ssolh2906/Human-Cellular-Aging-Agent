@@ -1,12 +1,12 @@
-#NAME: convert_to_h5ad.py
+#NAME: h5ad_utils.py
 # ST
 """
 Converts raw data/Sample_<id>.tar(.gz) archives to data/Sample_<id>.h5ad.
 
 Usage (from the project root):
-  python src/01_preprocess/convert_to_h5ad.py                    # every sample in metadata.json
-  python src/01_preprocess/convert_to_h5ad.py --samples 3444 1931
-  python src/01_preprocess/convert_to_h5ad.py --overwrite
+  python src/01_preprocess/h5ad_utils.py                    # every sample in metadata.json
+  python src/01_preprocess/h5ad_utils.py --samples 3444 1931
+  python src/01_preprocess/h5ad_utils.py --overwrite
 """
 
 # IMPORTS
@@ -17,6 +17,8 @@ from cs223_scRNAdataset_read_funs import DATA_DIR, _sample_name, load_broad_meta
 
 def h5ad_path(sample_id):
     return DATA_DIR / f"{_sample_name(sample_id)}.h5ad"
+
+
 
 
 def convert(sample_ids=None, overwrite=False):

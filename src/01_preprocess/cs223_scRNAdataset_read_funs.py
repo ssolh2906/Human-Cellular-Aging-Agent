@@ -11,8 +11,8 @@ from scipy.io import mmread
 
 # Resolved from this file's location so paths work regardless of cwd (scripts, notebooks/)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = PROJECT_ROOT / "data"
-OUTPUT_DIR = PROJECT_ROOT / "output"
+DATA_DIR = PROJECT_ROOT / "data/broad"
+OUTPUT_DIR = PROJECT_ROOT / "data/converted_h5ad_data"
 
 """
 See AnnData documentation at  
