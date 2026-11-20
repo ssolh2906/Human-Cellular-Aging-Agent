@@ -1,23 +1,25 @@
-#NAME: convert_to_h5ad.py
+#NAME: h5ad_utils.py
 # ST
 """
 Converts raw data/Sample_<id>.tar(.gz) archives to data/Sample_<id>.h5ad.
 
 Usage (from the project root):
-  python src/01_preprocess/convert_to_h5ad.py                    # every sample in metadata.json
-  python src/01_preprocess/convert_to_h5ad.py --samples 3444 1931
-  python src/01_preprocess/convert_to_h5ad.py --overwrite
+  python src/01_preprocess/h5ad_utils.py                    # every sample in metadata.json
+  python src/01_preprocess/h5ad_utils.py --samples 3444 1931
+  python src/01_preprocess/h5ad_utils.py --overwrite
 """
 
 # IMPORTS
 import argparse
 import anndata as ad
-from cs223_scRNAdataset_read_funs import DATA_DIR, _sample_name, load_broad_metadata, load_broad_sample
+from cs223_scRNAdataset_read_funs import DATA_DIR, OUTPUT_DIR, _sample_name, load_broad_metadata, load_broad_sample
 
 
 def h5ad_path(sample_id):
     return DATA_DIR / f"{_sample_name(sample_id)}.h5ad"
 
+def h5ad_output_path(sample_id):
+    return OUTPUT_DIR / f"{_sample_name(sample_id)}.h5ad"
 
 def convert(sample_ids=None, overwrite=False):
     """Writes one .h5ad per sample; existing files are skipped unless overwrite=True."""
@@ -25,7 +27,7 @@ def convert(sample_ids=None, overwrite=False):
         sample_ids = list(load_broad_metadata().index)
 
     for sample_id in sample_ids:
-        out = h5ad_path(sample_id)
+        out = h5ad_output_path(sample_id)
         if out.exists() and not overwrite:
             print(f"skip   {out.name} (exists)")
             continue

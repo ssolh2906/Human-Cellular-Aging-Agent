@@ -1,7 +1,10 @@
 # NAME:  scRNAseq_llm_analysis_step1.py
 # HH
 # IMPORTS
+<<<<<<< HEAD
 import glob
+=======
+>>>>>>> origin/main
 import os
 import subprocess
 import sys
@@ -9,6 +12,7 @@ import scanpy as sc
 from anthropic import Anthropic
 from anthropic.types.beta import BetaMessageParam, BetaToolParam, BetaToolResultBlockParam
 
+<<<<<<< HEAD
 # NOTE: This script runs all files from ./data/converted_h5ad_data/. It doesn't use metadata.json
 # NOTE: Right now the loop is in the __main__ so the lmm choice may not be consistent
 # TODO: Fix the parameterization so the model choice is consistent across all samples in a batch run.
@@ -38,6 +42,29 @@ def execute_python_code(code: str, step: int, scripts_dir: str) -> tuple[str, bo
     """
     os.makedirs(scripts_dir, exist_ok=True)
     script_path = os.path.join(scripts_dir, f"step_{step:02d}.py")
+=======
+# Initialize the Anthropic client using the environment variable 'ANTHROPIC_API_KEY'
+client = Anthropic()  # reads ANTHROPIC_API_KEY from the environment
+file_path = "./data/pbmc_sample.h5ad"   # Change to point to the desired .h5ad file
+
+MODEL = "claude-sonnet-5-5"             # Official API identifier for Sonnet 5.5
+OUTPUT_DIR = "./output"                 # All AnnData outputs are written here
+OUTPUT_H5AD_PATH = os.path.join(OUTPUT_DIR, "processed_dataset.h5ad")
+SCRIPTS_DIR = os.path.join(OUTPUT_DIR, "agent_scripts")   # Copy of every script Claude runs
+MAX_AGENT_TURNS = 25                    # Safety cap on the tool-use loop
+
+
+# TOOL FUNS
+def execute_python_code(code: str, step: int) -> tuple[str, bool]:
+    """
+    Tool allowing Claude to execute Python code locally via a subprocess.
+    The code is saved to ./output/agent_scripts/step_XX.py (so the run is
+    reproducible) and executed with the same interpreter running this script.
+    Returns (combined stdout/stderr, is_error).
+    """
+    os.makedirs(SCRIPTS_DIR, exist_ok=True)
+    script_path = os.path.join(SCRIPTS_DIR, f"step_{step:02d}.py")
+>>>>>>> origin/main
     with open(script_path, "w", encoding="utf-8") as f:
         f.write(code)
 
@@ -81,6 +108,7 @@ tools: list[BetaToolParam] = [
 
 
 # ANALYSIS FUNS
+<<<<<<< HEAD
 def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path: str) -> bool:
     """
     Loads one .h5ad file, extracts metadata, and has Claude Sonnet 5.5 perform the
@@ -91,6 +119,15 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
     work_dir = f"{INTERMEDIATE_DIR}/{sample_name}"
     scripts_dir = f"{SCRIPTS_DIR}/{sample_name}"
 
+=======
+def analyze_scrna_with_claude(file_path: str):
+    """
+    Loads a .h5ad file, extracts metadata, and has Claude Sonnet 5.5 perform the
+    scanpy QC -> dimensionality reduction -> clustering workflow itself by running
+    Python code locally through the execute_python tool. The processed AnnData
+    object is saved to ./output.
+    """
+>>>>>>> origin/main
     print(f"--- Loading dataset: {file_path} ---")
     # 1. Load the scRNA-seq object
     adata = sc.read_h5ad(file_path)
@@ -112,8 +149,12 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
     else:
         cluster_context = "No pre-computed structural clusters found in metadata."
 
+<<<<<<< HEAD
     os.makedirs(OUTPUT_H5AD_DIR, exist_ok=True)
     os.makedirs(work_dir, exist_ok=True)
+=======
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+>>>>>>> origin/main
 
     # 3. Construct a clear analysis prompt for Claude
     prompt = f"""
@@ -132,7 +173,10 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
     - If a script fails, read the error, fix the script, and run it again.
 
     Dataset context (already extracted):
+<<<<<<< HEAD
     - Sample: {sample_name}
+=======
+>>>>>>> origin/main
     - Input file: "{file_path}"
     - Shape: {num_cells} cells x {num_genes} genes
     - .obs columns: {obs_columns}
@@ -170,19 +214,32 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
        - Cluster the cells using the Leiden algorithm with a resolution of 0.5, storing the labels in
          .obs['leiden'] (random_state=0). Print the size of each cluster.
        - Existing annotation columns such as 'louvain' and 'bulk_labels' must remain unchanged; check this.
+<<<<<<< HEAD
     7. Output: Save the final, fully processed AnnData object (the `adata` variable) to exactly this
        file path: "{output_h5ad_path}" (the folder already exists). Write it with
        `adata.write_h5ad("{output_h5ad_path}", compression="gzip")` so .raw is saved along with it.
        Any intermediate .h5ad files you need between tool calls must go in "{work_dir}" (it already exists).
        Never modify the input file.
     8. Verify: In a separate tool call, reload "{output_h5ad_path}" and confirm it contains .raw,
+=======
+    7. Output: Save the final, fully processed AnnData object (the `adata` variable) to
+       "{OUTPUT_H5AD_PATH}" inside the "{OUTPUT_DIR}" folder, creating the folder if needed
+       (`os.makedirs("{OUTPUT_DIR}", exist_ok=True)`). Write it with `adata.write_h5ad(..., compression="gzip")`
+       so .raw is saved along with it. Any intermediate .h5ad files you need between tool calls must
+       also go in "{OUTPUT_DIR}".
+    8. Verify: In a separate tool call, reload "{OUTPUT_H5AD_PATH}" and confirm it contains .raw,
+>>>>>>> origin/main
        .obsm['X_pca'], .obsm['X_umap'], .obs['leiden'], and the neighbors graph.
 
     When you are finished, reply with a short summary of what you did, which steps you skipped and why,
     the number of Leiden clusters with their sizes, and the path of the saved file.
     """
 
+<<<<<<< HEAD
     print(f"--- Starting {MODEL} agent workflow for {sample_name} ---")
+=======
+    print(f"--- Starting {MODEL} agent workflow ---")
+>>>>>>> origin/main
 
     # 4. Run the agent loop: Claude asks to run code, we run it locally and send back the output
     conversation_history: list[BetaMessageParam] = [{"role": "user", "content": prompt}]
@@ -212,7 +269,11 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
                 code_to_run = str(block.input["code"])
                 print(f"\n--- [Claude Execution Request: step {step}] ---\n{code_to_run}\n")
 
+<<<<<<< HEAD
                 tool_output, is_error = execute_python_code(code_to_run, step, scripts_dir)
+=======
+                tool_output, is_error = execute_python_code(code_to_run, step)
+>>>>>>> origin/main
                 print(f"--- [Execution Result: step {step}] ---\n{tool_output}\n")
 
                 tool_results.append({
@@ -227,6 +288,7 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
         print(f"⚠️\n"
                f"Stopped after {MAX_AGENT_TURNS} turns without Claude finishing.")
 
+<<<<<<< HEAD
     if response is not None:    # None only if MAX_AGENT_TURNS is 0
         if response.stop_reason == "refusal":
             print("⚠️ Claude declined the request.")
@@ -245,12 +307,33 @@ def analyze_scrna_with_claude(file_path: str, sample_name: str, output_h5ad_path
         return True
     print(f"⚠️ Expected output file was not found: {output_h5ad_path}")
     return False
+=======
+    if response is None:    # Only possible if MAX_AGENT_TURNS is 0
+        return
+
+    if response.stop_reason == "refusal":
+        print("⚠️ Claude declined the request.")
+    elif response.stop_reason == "max_tokens":
+        print("⚠️ Claude's response was cut off (max_tokens reached).")
+
+    # 5. Extract and print Claude's final summary
+    analysis_summary = "".join(block.text for block in response.content if block.type == "text")
+    print("\n--- Claude's Analysis Summary ---\n")
+    print(analysis_summary or "No text response generated")
+
+    if os.path.exists(OUTPUT_H5AD_PATH):
+        print(f"🎉 Processed AnnData saved to: {OUTPUT_H5AD_PATH}")
+    else:
+        print(f"⚠️ Expected output file was not found: {OUTPUT_H5AD_PATH}")
+    print(f"Scripts executed by Claude are in: {SCRIPTS_DIR}")
+>>>>>>> origin/main
 
 
 if __name__ == "__main__":
     # Ensure your ANTHROPIC_API_KEY is either exported in your terminal:
     # export ANTHROPIC_API_KEY="your-api-key-here"
     # -OR-
+<<<<<<< HEAD
     # You have directly specified the client = Anthropic(api_key= ...) statement above.
 
     input_files = sorted(glob.glob(f"{INPUT_H5AD_DIR}/*.h5ad"))
@@ -284,3 +367,15 @@ if __name__ == "__main__":
     if failed:
         print(f"Failed samples: {failed}")
     print(">>>>>>>>>> DONE <<<<<<<<<<")
+=======
+    # You have specified dirctly specified the client = Anthropic(api_key= ...) statement above.
+
+    file_path = "./data/pbmc_sample.h5ad"
+
+    if os.path.exists(file_path):
+        analyze_scrna_with_claude(file_path)
+    else:
+        print(f"File '{file_path}' not found. Please provide a valid path to your single-cell data.")
+
+print(">>>>>>>>>> DONE <<<<<<<<<<")
+>>>>>>> origin/main
