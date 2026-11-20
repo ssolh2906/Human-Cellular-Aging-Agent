@@ -15,6 +15,7 @@ vector over all genes (for cross-tree comparison: PCA spaces of different sample
 """
 
 # IMPORTS
+import argparse
 import heapq
 import json
 import re
@@ -37,6 +38,9 @@ TREE_SUFFIX = "_bubbletree.h5ad"
 DEFAULT_NUMERIC = ("total_counts", "n_genes_by_counts", "pct_counts_mt")
 # node-table columns that are structure, not per-bubble statistics
 STRUCT_COLS = {"is_leaf", "height", "parent", "left", "right"}
+
+PROCESSED_DIR = PROJECT_ROOT / "output" / "processed_h5ad"   # written by 02_scRNA_analysis step 1
+PROCESSED_SUFFIX = "_processed.h5ad"
 
 
 # ---------------------------------------------------------------- tree object
@@ -394,3 +398,53 @@ def load_trees(run_dir):
     """All trees of one run directory as {name: BubbleTree}."""
     trees = (load_tree(p) for p in sorted(Path(run_dir).glob(f"*{TREE_SUFFIX}")))
     return {t.name: t for t in trees}
+
+
+
+def build_trees_from_dir(input_dir=PROCESSED_DIR, run_dir=None, samples=None, plot=True):
+    """
+    Builds and saves one tree per <sample>_processed.h5ad in input_dir, all into one run_dir
+    (default: a new analysis/bubbletree_<date>_<time>/). samples: optional list of names to restrict to.
+    A sample that fails is reported and skipped. Returns (run_dir, {name: BubbleTree}).
+    """
+    files = sorted(Path(input_dir).glob(f"*{PROCESSED_SUFFIX}"))
+    if samples:
+        files = [f for f in files if f.name[: -len(PROCESSED_SUFFIX)] in set(samples)]
+    if not files:
+        raise FileNotFoundError(f"no *{PROCESSED_SUFFIX} files in {input_dir}" + (f" for {samples}" if samples else ""))
+
+    run_dir = Path(run_dir) if run_dir else get_run_dir()
+    trees, failed = {}, []
+    for i, path in enumerate(files, start=1):
+        name = path.name[: -len(PROCESSED_SUFFIX)]   # "Sample_1931_processed.h5ad" -> "Sample_1931"
+        print(f"[{i}/{len(files)}] {name}")
+        try:
+            adata = ad.read_h5ad(path)
+            # Step 1 scales .X (negative values); the log-normalized, unscaled data is kept in .raw.
+            # raw.to_adata() keeps obs and obsm (leiden, X_pca), so the tree is built on log-normalized values.
+            if adata.raw is not None:
+                adata = adata.raw.to_adata()
+            tree = build_bubbletree(adata, name=name)
+            save_tree(tree, run_dir, plot=plot)
+            trees[name] = tree
+            print(f"    {tree.n_leaves} bubbles, {tree.params['n_cells']} cells")
+        except Exception as e:   # one bad sample should not stop the rest
+            print(f"    FAILED: {e}")
+            failed.append(name)
+        finally:
+            adata = None   # free the sample's memory before loading the next one
+
+    print(f"\nsaved {len(trees)} trees in {run_dir}" + (f"; failed: {failed}" if failed else ""))
+    return run_dir, trees
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--input_dir", default=str(PROCESSED_DIR),
+                        help=f"folder of <sample>{PROCESSED_SUFFIX} files (default: output/processed_h5ad)")
+    parser.add_argument("--sample", nargs="+", help="only these samples, e.g. Sample_1931 Sample_3444 (default: all)")
+    parser.add_argument("--run_dir", help="where to save the trees (default: new analysis/bubbletree_<date>_<time>/)")
+    parser.add_argument("--no_plot", action="store_true", help="don't save a PNG of each tree")
+    args = parser.parse_args()
+
+    build_trees_from_dir(args.input_dir, args.run_dir, args.sample, plot=not args.no_plot)
